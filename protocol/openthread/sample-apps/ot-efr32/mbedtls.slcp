@@ -1,0 +1,23 @@
+project_name: ot-efr32-mbedtls
+label: ot-efr32-mbedtls
+package: OpenThread
+description: This is a very simple CLI application to test the Openthread stack on a Full Thread Device.
+category: OpenThread Examples
+quality: production
+
+component:
+  - id: ot_platform_abstraction
+  - id: ot_psa_crypto
+  - id: ot_mbedtls
+
+include:
+  - path: .
+    file_list:
+
+source: []
+
+configuration:
+  - name: SL_MBEDTLS_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED
+    value: 1
+  - name: SL_MBEDTLS_KEY_EXCHANGE_PSK_ENABLED
+    value: 1
