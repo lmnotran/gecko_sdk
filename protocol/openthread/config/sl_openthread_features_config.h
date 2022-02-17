@@ -1,3 +1,5 @@
+#ifndef _SL_OPENTHREAD_FEATURES_CONFIG_H
+#define _SL_OPENTHREAD_FEATURES_CONFIG_H
 //-------- <<< Use Configuration Wizard in Context Menu >>> -----------------
 //
 // <h> OpenThread Stack Configurations
@@ -7,13 +9,13 @@
 //      <2=> Thread 1.1 (OT_THREAD_VERSION_1_1 = 2)
 //      <3=> Thread 1.2 (OT_THREAD_VERSION_1_2 = 3)
 // <i>  Thread 1.2 is compatible with Thread 1.1.
-// <i>  Current Default: 3 (Thread 1.2)
+// <i>  Current Default: OT_THREAD_VERSION_1_2
 #ifndef OPENTHREAD_CONFIG_THREAD_VERSION
-#define OPENTHREAD_CONFIG_THREAD_VERSION 3
+#define OPENTHREAD_CONFIG_THREAD_VERSION OT_THREAD_VERSION_1_2
 #endif
 // </h>
 
-#if (OPENTHREAD_CONFIG_THREAD_VERSION == 3)
+#if (OPENTHREAD_CONFIG_THREAD_VERSION == OT_THREAD_VERSION_1_2)
 // <h>  The following features require at least Thread Stack Protocol Version 1.2
 // <q>  Backbone Router
 #ifndef OPENTHREAD_CONFIG_BACKBONE_ROUTER_ENABLE
@@ -364,3 +366,4 @@
 // </h>
 
 // <<< end of configuration section >>>
+#endif // _SL_OPENTHREAD_FEATURES_CONFIG_H
