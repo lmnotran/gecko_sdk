@@ -747,17 +747,21 @@ void emLowerMacEventHandler(void)
 #ifdef CSL_SUPPORT
 void emLowerMacCslEventHandler(EmberEvent *event)
 {
-  sli_mac_inactivate_event(emLowerMacCslEvent);
-
   // We get here after we received a wake up frame. We don't care if we
   // received the payload or not; we simply go back to duty cycling
+
+  // First thing's first: yield the radio so other things can use it
+  if (sl_mac_lower_mac_is_idle(0)) {
+    RAIL_YieldRadio(connectRailHandle);
+  }
+
   wakeupFrameReceived = false;
   sl_status_t status = configureDutyCycling(true);
   if (status == SL_STATUS_OK) {
-    radioSetRx();
-  }
-  if (sl_mac_lower_mac_is_idle(0)) {
-    RAIL_YieldRadio(connectRailHandle);
+    // Here we schedule RX in the future. This is so that the zigbee task
+    // can idle. If we had called radioSetRx/RAIL_StartRx instead of deferring
+    // RX, the RAIL state would be in receive and the zigbee task wouldn't idle
+    radioScheduleRx(macCslPeriodMs * 1000, RAIL_TIME_DELAY, 0, 0);
   }
 }
 #endif
@@ -1617,8 +1621,6 @@ static void packetReceivedCallback(void)
     }
     return;
   }
-
-  wakeupFrameReceived = false;
 
 #endif // CSL_SUPPORT
 
@@ -3565,6 +3567,13 @@ EmberStatus emRadioConfigRxAntenna(sl_rail_util_antenna_mode_t mode)
 }
 
 #endif//SLI_ANTDIV_SUPPORTED
+
+sl_status_t sl_mac_set_cca_mode(uint8_t ccaMode)
+{
+  RAIL_Status_t status = RAIL_IEEE802154_ConfigCcaMode(connectRailHandle,
+                                                       (RAIL_IEEE802154_CcaMode_t)ccaMode);
+  return ((status == RAIL_STATUS_NO_ERROR) ? SL_STATUS_OK : SL_STATUS_FAIL);
+}
 
 #ifdef CSL_SUPPORT
 static sl_status_t configureDutyCycling(bool enable)

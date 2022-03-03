@@ -52,7 +52,6 @@
 #include "em_core.h"
 #include "em_rmu.h"
 #include "em_emu.h"
-#include "em_system.h"
 
 #include "gpiointerrupt.h"
 #include "response_print.h"
@@ -72,6 +71,14 @@
 
 #include "sl_rail_test_config.h"
 
+#ifdef SL_CATALOG_RAIL_UTIL_COEX_PRESENT
+#include "coexistence-802154.h"
+#endif
+
+#ifdef SL_CATALOG_TIMING_TEST_PRESENT
+#include "sl_rail_util_timing_test.h"
+#endif
+
 #ifndef STATIC_ASSERT
 #ifdef __ICCARM__
   #define STATIC_ASSERT(__condition, __errorstr) \
@@ -83,7 +90,7 @@
   #define STATIC_ASSERT(__condition, __errorstr)
 #endif
 #endif//STATIC_ASSERT
-STATIC_ASSERT(sizeof(RailAppEvent_t) <= 36,
+STATIC_ASSERT(sizeof(RailAppEvent_t) <= 40,
               "Adjust BUFFER_POOL_ALLOCATOR_BUFFER_SIZE_MAX per sizeof(RailAppEvent_t) growth");
 
 // Includes for Silicon Labs-only, internal testing
@@ -201,6 +208,10 @@ const uint8_t numRailEvents = COUNTOF(eventNames);
 #if RAIL_FEAT_CHANNEL_HOPPING
 uint32_t channelHoppingBufferSpace[CHANNEL_HOPPING_BUFFER_SIZE];
 uint32_t *channelHoppingBuffer = channelHoppingBufferSpace;
+#endif
+
+#ifdef SL_CATALOG_TIMING_TEST_PRESENT
+extern volatile bool enableRxPacketEventTimeCapture;
 #endif
 
 // Channel Variable
@@ -335,72 +346,10 @@ void sl_rail_test_internal_app_init(void)
 
   // Make sure the response printer mirrors the default printingEnabled state
   responsePrintEnable(printingEnabled);
-
-#define EVALIT(a, b)  a # b
-#define PASTEIT(a, b) EVALIT(a, b)
-#if defined(_SILICON_LABS_32B_SERIES_1)
- #if   (_SILICON_LABS_32B_SERIES_1_CONFIG == 1)
-  #define FAMILY_NAME "EFR32XG1"
- #else
-  #define FAMILY_NAME PASTEIT("EFR32XG1", _SILICON_LABS_32B_SERIES_1_CONFIG)
- #endif
-#elif defined(_SILICON_LABS_32B_SERIES_2)
-  #define FAMILY_NAME PASTEIT("EFR32XG2", _SILICON_LABS_32B_SERIES_2_CONFIG)
-#else
-  #define FAMILY_NAME "??"
-#endif
-#ifndef _SILICON_LABS_GECKO_INTERNAL_SDID
-  #define _SILICON_LABS_GECKO_INTERNAL_SDID 0U
-#endif
-
   // Print app initialization information.
   RAILTEST_PRINTF("\n");
   responsePrint("reset", "App:%s,Built:%s", SL_RAIL_TEST_APP_NAME, buildDateTime);
-#if defined(_SILICON_LABS_32B_SERIES_2)
-  uint32_t moduleName32[8] = {
-    DEVINFO->MODULENAME0, DEVINFO->MODULENAME1, DEVINFO->MODULENAME2,
-    DEVINFO->MODULENAME3, DEVINFO->MODULENAME4, DEVINFO->MODULENAME5,
-    DEVINFO->MODULENAME6, 0UL
-  };
-  char *moduleName = (char *) moduleName32;
-  for (uint8_t i = 0U; i < sizeof(moduleName32); i++) {
-    if ((moduleName[i] == '\0') || (moduleName[i] == '\xFF')) {
-      moduleName[i] = '\0';
-      break;
-    }
-  }
-  responsePrint("radio", "FreqHz:%u,ModuleInfo:0x%08x,ModuleName:%s",
-                RAIL_GetRadioClockFreqHz(railHandle),
-                DEVINFO->MODULEINFO,
-                ((moduleName[0] == '\0') ? "N/A" : moduleName));
-#else
-  responsePrint("radio", "FreqHz:%u,ModuleInfo:0x%08x",
-                RAIL_GetRadioClockFreqHz(railHandle),
-                DEVINFO->MODULEINFO);
-#endif
-  SYSTEM_ChipRevision_TypeDef chipRev = { 0, };
-  SYSTEM_ChipRevisionGet(&chipRev);
-
-  // SYSTEM_ChipRevision_TypeDef defines either a partNumber field or a family field.
-  // If _SYSCFG_CHIPREV_PARTNUMBER_MASK is defined, there is a partNumber field.
-  // Otherwise, there is a family field.
-  responsePrint("system", "Family:%s,"
-#if defined(_SYSCFG_CHIPREV_PARTNUMBER_MASK)
-                "Part#:%u,"
-#else
-                "Fam#:%u,"
-#endif
-                "ChipRev:%u.%u,sdid:%u,Part:0x%08x",
-                FAMILY_NAME,
-#if defined(_SYSCFG_CHIPREV_PARTNUMBER_MASK)
-                chipRev.partNumber,
-#else
-                chipRev.family,
-#endif
-                chipRev.major,
-                chipRev.minor,
-                _SILICON_LABS_GECKO_INTERNAL_SDID,
-                DEVINFO->PART);
+  printChipInfo();
   getPti(NULL);
 
   // Set TX FIFO, and verify that the size is correct
@@ -430,7 +379,7 @@ void sl_rail_test_internal_app_init(void)
     // Always turn off RfSense when waking back up from EM4
     (void) RAIL_StartRfSense(railHandle, RAIL_RFSENSE_OFF, 0, NULL);
   }
-#elif (_SILICON_LABS_32B_SERIES_2_CONFIG == 2)
+#elif ((_SILICON_LABS_32B_SERIES_2_CONFIG == 2) || (_SILICON_LABS_32B_SERIES_2_CONFIG == 7))
   if (resetCause & EMU_RSTCAUSE_EM4) {
     responsePrint("sleepWoke", "EM:4s,SerialWakeup:No,RfSensed:%s",
                   RAIL_IsRfSensed(railHandle) ? "Yes" : "No");
@@ -636,6 +585,13 @@ void sl_rail_util_on_assert_failed(RAIL_Handle_t railHandle, uint32_t errorCode)
 // Override weak function called by callback sli_rail_util_on_event.
 void sl_rail_util_on_event(RAIL_Handle_t railHandle, RAIL_Events_t events)
 {
+#ifdef SL_CATALOG_TIMING_TEST_PRESENT
+  if (enableRxPacketEventTimeCapture
+      && (events & RAIL_EVENT_RX_PACKET_RECEIVED)) {
+    sl_rac_info_start.radioStateTimerTick = *RAIL_TimerTick;
+    enableRxPacketEventTimeCapture = false;
+  }
+#endif //SL_CATALOG_TIMING_TEST_PRESENT
   enqueueEvents(events);
   if (events & RAIL_EVENT_CAL_NEEDED) {
     calibrateRadio = true;
@@ -1201,8 +1157,7 @@ void printPacket(char *cmdName,
   responsePrintStart(cmdName);
   if (packetData != NULL) {
     responsePrintContinue(
-      "len:%d,timeUs:%u,timePos:%u,crc:%s,filterMask:0x%x,rssi:%d,lqi:%d,phy:%d,"
-      "isAck:%s,syncWordId:%d,antenna:%d,channelHopIdx:%d",
+      "len:%d,timeUs:%u,timePos:%u,crc:%s,filterMask:0x%x,rssi:%d,lqi:%d,phy:%d",
       packetData->dataLength,
       packetData->appendedInfo.timeReceived.packetTime,
       packetData->appendedInfo.timeReceived.timePosition,
@@ -1210,11 +1165,14 @@ void printPacket(char *cmdName,
       packetData->filterMask,
       packetData->appendedInfo.rssi,
       packetData->appendedInfo.lqi,
-      packetData->appendedInfo.subPhyId,
+      packetData->appendedInfo.subPhyId);
+    responsePrintContinue(
+      "isAck:%s,syncWordId:%d,antenna:%d,channelHopIdx:%d,channel:%u",
       packetData->appendedInfo.isAck ? "True" : "False",
       packetData->appendedInfo.syncWordId,
       packetData->appendedInfo.antennaId,
-      packetData->appendedInfo.channelHoppingChannelIndex);
+      packetData->appendedInfo.channelHoppingChannelIndex,
+      packetData->appendedInfo.channel);
     if (RAIL_IEEE802154_IsEnabled(railHandle)) {
       responsePrintContinue(
         "ed154:%u,lqi154:%u",

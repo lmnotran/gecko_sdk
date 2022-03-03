@@ -45,9 +45,15 @@ void cli_coex_154_set_options(sl_cli_command_arg_t *args)
   responsePrint(sl_cli_get_command_string(args, 0), "Status:0x%x", status);
 }
 
+static bool coex_154_cli_initialized = false;
+
 void cli_coex_154_set_enable(sl_cli_command_arg_t *args)
 {
   bool enabled = !!(bool)sl_cli_get_argument_uint8(args, 0);
+  if (enabled && !coex_154_cli_initialized) {
+    sl_rail_util_coex_init();
+    coex_154_cli_initialized = true;
+  }
   sl_status_t status = sl_rail_util_coex_set_enable(enabled);
   responsePrint(sl_cli_get_command_string(args, 0), "Status:0x%x", status);
 }

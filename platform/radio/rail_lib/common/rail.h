@@ -2767,6 +2767,8 @@ RAIL_Status_t RAIL_StartScheduledTx(RAIL_Handle_t railHandle,
  * Returns an error if a previous transmit is still in progress.
  * If changing channels, any ongoing packet reception is aborted.
  *
+ * Returns an error if a scheduled RX is still in progress.
+ *
  * In multiprotocol, ensure that the radio is properly yielded after this
  * operation completes. See \ref rail_radio_scheduler_yield for more details.
  */
@@ -2811,6 +2813,8 @@ RAIL_Status_t RAIL_StartCcaCsmaTx(RAIL_Handle_t railHandle,
  *
  * Returns an error if a previous transmit is still in progress.
  * If changing channels, any ongoing packet reception is aborted.
+ *
+ * Returns an error if a scheduled RX is still in progress.
  *
  * In multiprotocol, ensure that the radio is properly yielded after this
  * operation completes. See \ref rail_radio_scheduler_yield for more details.
@@ -3349,6 +3353,8 @@ RAIL_Status_t RAIL_StartRx(RAIL_Handle_t railHandle,
  * end times are always relative to the start unless no start time is
  * specified. If changing channels, aborts any ongoing packet transmission or
  * reception.
+ *
+ * Returns an error if a CSMA or LBT transmit is still in progress.
  *
  * In multiprotocol, ensure that you properly yield the radio after this
  * call. See \ref rail_radio_scheduler_yield for more details.
@@ -3965,10 +3971,9 @@ int16_t RAIL_GetAverageRssi(RAIL_Handle_t railHandle);
  *  such as \ref RAIL_EFR32_HANDLE, can be used to set a chip level RSSI offset.
  *
  * @note: Setting a large rssiOffset may still cause the RSSI readings to
- *  underflow or overflow. If that happens, the RSSI value returned by
+ *  underflow. If that happens, the RSSI value returned by
  *  \ref RAIL_GetRssi, \ref RAIL_GetAverageRssi,
- *  \ref RAIL_GetChannelHoppingRssi etc. will be \ref RAIL_RSSI_LOWEST or
- *  \ref RAIL_RSSI_HIGHEST, respectively.
+ *  \ref RAIL_GetChannelHoppingRssi etc. will be \ref RAIL_RSSI_LOWEST
  */
 RAIL_Status_t RAIL_SetRssiOffset(RAIL_Handle_t railHandle, int8_t rssiOffset);
 
@@ -5446,7 +5451,100 @@ RAIL_Status_t RAIL_Verify(RAIL_VerifyConfig_t *configVerify,
                           uint32_t durationUs,
                           bool restart);
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
+/**
+ * A global pointer to the memory address of the internal RAIL hardware timer
+ * that drives the RAIL timebase.
+ *
+ * @note The corresponding timer tick value is not adjusted for overflow or the
+ *   clock period, and will simply be a register read. The ticks wrap after
+ *   about 17 minutes since it does not use the full 32-bit range.
+ *   For more details, check the documentation for \ref RAIL_TimerTick_t.
+ */
+extern const volatile RAIL_TimerTick_t *RAIL_TimerTick;
+
+/**
+ * Get elapsed time, in microseconds, between two \ref RAIL_TimerTick_t ticks.
+ *
+ * @param[in] startTick Tick recorded at the start of the operation.
+ * @param[in] endTick Tick recorded at the end of the operation.
+ *
+ * @return Returns the elapsed time, in microseconds, between two timer ticks.
+ */
+RAIL_Time_t RAIL_TimerTicksToUs(RAIL_TimerTick_t startTick,
+                                RAIL_TimerTick_t endTick);
+
+/**
+ * Get \ref RAIL_TimerTick_t tick corresponding to the \ref RAIL_Time_t time.
+ *
+ * @param[in] microseconds Time in microseconds.
+ *
+ * @return Returns the \ref RAIL_TimerTick_t tick corresponding to the
+ *   \ref RAIL_Time_t time.
+ */
+RAIL_TimerTick_t RAIL_UsToTimerTicks(RAIL_Time_t microseconds);
+
+/**
+ * Enable Radio state change interrupt.
+ *
+ * @param[in] railHandle A RAIL instance handle.
+ * @param[in] enable Enable/disable Radio state change interrupt.
+ * @return Status code indicating success of the function call. Returns
+ *   \ref RAIL_STATUS_NO_ERROR once the interrupt has been enabled or disabled.
+ *
+ * @note If enabled, state change events are reported through the separate
+ *   RAILCb_RadioStateChanged() callback.
+ */
+RAIL_Status_t RAIL_EnableRadioStateChanged(RAIL_Handle_t railHandle,
+                                           bool enable);
+
+/**
+ * Get the current radio state.
+ *
+ * @param[in] railHandle A RAIL instance handle.
+ * @return An enumeration, \ref RAIL_RadioStateEfr32_t, for the current radio
+ *   state.
+ *
+ */
+RAIL_RadioStateEfr32_t RAIL_GetRadioStateAlt(RAIL_Handle_t railHandle);
+
+#endif//DOXYGEN_SHOULD_SKIP_THIS
+
 /** @} */ // end of group Diagnostic
+
+/******************************************************************************
+ * Energy Friendly Front End Module (EFF)
+ *****************************************************************************/
+/**
+ * @addtogroup EFF Energy Friendly Front End Module (EFF)
+ * @brief APIs for configuring and controlling an attached Energy Friendly Front
+ * End Module (EFF).
+ *
+ * The EFF is a high-performance, transmit/receive (T/R) front end module (FEM)
+ * for sub-GHz EFR32 devices. RAIL includes built-in functionality to transmit
+ * and receive via an attached EFF. This functionality optimizes RF performance
+ * while ensuring that the EFF stays within safe operating temperature limits.
+ *
+ * Configuration and control of the EFF is performed by the \ref rail_util_eff.
+ *
+ * @note The EFF is only supported with EFR32XG25 devices.
+ * @{
+ */
+
+/**
+ * Configure the attached EFF device.
+ *
+ * @param[in] railHandle A RAIL instance handle.
+ * @param[in] config  A pointer to a \ref RAIL_EffConfig_t struct that contains
+ *                    configuration data for the EFF.
+ * @return Status code indicating success of the function call.
+ */
+
+RAIL_Status_t RAIL_ConfigEff(RAIL_Handle_t railHandle,
+                             const RAIL_EffConfig_t *config);
+
+/** @} */ // end of group EFF
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
@@ -5458,6 +5556,23 @@ RAIL_Status_t RAIL_Verify(RAIL_VerifyConfig_t *configVerify,
  * @brief APIs for debugging
  * @{
  */
+
+/**
+ * Get the different temperature measurements in Kelvin done by sequencer or host.
+ * Values that are not populated yet or incorrect are set to 0.
+ *
+ * @param[in] railHandle A RAIL instance handle.
+ * @param[in] tempBuffer The address of the array that will contain temperatures.
+ *    tempBuffer array must be at least \ref RAIL_TEMP_MEASURE_COUNT int16_t.
+ * @param[in] reset Reset the EFF temperature values.
+ * @return Status code indicating success of the function call.
+ */
+RAIL_Status_t RAIL_GetTemperature(RAIL_Handle_t railHandle,
+                                  int16_t *tempBuffer,
+                                  bool reset);
+
+/** Number of temperature values provided by \ref RAIL_GetTemperature(). */
+#define RAIL_TEMP_MEASURE_COUNT  (14U)
 
 /**
  * Configure the debug mode for the radio library. Do not use this function

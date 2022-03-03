@@ -54,6 +54,27 @@ RAIL_Handle_t emPhyRailHandle;
 extern RAIL_Status_t sl_rail_util_ieee802154_config_radio(RAIL_Handle_t railHandle);
 #endif // SL_CATALOG_RAIL_UTIL_IEEE802154_STACK_EVENT_PRESENT
 
+extern RAIL_LbtConfig_t *lbtConfig;
+extern RAIL_CsmaConfig_t *csmaConfig;
+static int8_t ccaThreshold = RAIL_RSSI_INVALID_DBM;
+
+void emRadioHoldOffIsr(bool active)
+{
+  if (active) {
+    if (txType == TX_TYPE_CSMA) {
+      ccaThreshold = csmaConfig->ccaThreshold;
+      RAIL_SetCcaThreshold(railHandle, RAIL_RSSI_INVALID_DBM);
+    } else if (txType == TX_TYPE_LBT) {
+      ccaThreshold = lbtConfig->lbtThreshold;
+      RAIL_SetCcaThreshold(railHandle, RAIL_RSSI_INVALID_DBM);
+    }
+  } else if (ccaThreshold != RAIL_RSSI_INVALID_DBM) {
+    RAIL_SetCcaThreshold(railHandle, ccaThreshold);
+  } else {
+    // MISRA compliance
+  }
+}
+
 void sl_railtest_update_154_radio_config(void)
 {
 #ifdef SL_CATALOG_RAIL_UTIL_IEEE802154_STACK_EVENT_PRESENT
@@ -1068,16 +1089,16 @@ void RAILCb_IEEE802154_DataRequestCommand(RAIL_Handle_t railHandle)
 
 void set802154CcaMode(sl_cli_command_arg_t *args)
 {
-#if RAIL_IEEE802154_SUPPORTS_SIGNAL_IDENTIFIER
   RAIL_IEEE802154_CcaMode_t ccaMode = sl_cli_get_argument_uint8(args, 0);
-  RAIL_IEEE802154_ConfigCcaMode(railHandle, ccaMode);
-  responsePrint(sl_cli_get_command_string(args, 0),
-                "ccaMode:%u",
-                ccaMode);
-#else
-  responsePrint(sl_cli_get_command_string(args, 0),
-                "CCA modes unsupported");
-#endif
+  if (RAIL_IEEE802154_ConfigCcaMode(railHandle, ccaMode)
+      == RAIL_STATUS_NO_ERROR) {
+    responsePrint(sl_cli_get_command_string(args, 0),
+                  "ccaMode:%u",
+                  ccaMode);
+  } else {
+    responsePrint(sl_cli_get_command_string(args, 0),
+                  "CCA mode unsupported");
+  }
 }
 
 void enable802154SignalIdentifier(sl_cli_command_arg_t *args)

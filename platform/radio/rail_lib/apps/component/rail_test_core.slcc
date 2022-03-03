@@ -73,6 +73,9 @@ config_file:
   - path: platform/radio/rail_lib/apps/railtest/config/efr32xg25/sl_rail_test_config.h
     condition:
       - device_sdid_220
+  - path: platform/radio/rail_lib/apps/railtest/config/efr32xg27/sl_rail_test_config.h
+    condition:
+      - device_sdid_230
 
 include:
   - path: platform/radio/rail_lib/hal
@@ -1898,6 +1901,18 @@ template_contribution:
       help: "Gets the thermistor impedance."
       shortcuts:
         - name: getThermistorImpedance
+
+  - name: cli_command
+    value:
+      name: getTemperature
+      handler: getTemperature
+      help: "Show chip, FEM, XTAL temperatures in Celsius (255=invalid)"
+      argument:
+        - type: uint8opt
+          help: "1=reset temperature values after reading"
+    condition:
+      - device_sdid_220
+      - rail_util_eff
 
   - name: cli_command
     value:

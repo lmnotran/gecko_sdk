@@ -3,7 +3,7 @@ label: "802.15.4 MAC Layer"
 version: 1
 package: platform
 category: Radio|Mac
-quality: "production"
+quality: "internal"
 description: "802.15.4 MAC Layer"              
 provides:
   - name: "unified_mac"

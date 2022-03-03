@@ -52,7 +52,7 @@ typedef struct RMR_State{
   RAIL_ChannelConfigEntry_t generatedChannels[1];
   __ALIGNED(4) uint8_t convDecodeBuffer[RMR_CONV_DECODE_BUFFER_LEN];
   RAIL_ChannelConfig_t channelConfig;
-#if (_SILICON_LABS_32B_SERIES_2_CONFIG >= 3)
+#if ((_SILICON_LABS_32B_SERIES_2_CONFIG >= 3) && (_SILICON_LABS_32B_SERIES_2_CONFIG != 7))
   uint8_t dcdcRetimingConfig[RMR_DCDC_RETIMING_LEN];
 #endif
 #if (_SILICON_LABS_32B_SERIES_2_CONFIG >= 2)
@@ -103,7 +103,7 @@ RAIL_Status_t Rmr_updateConfigurationPointer(uint8_t structToModify, uint16_t of
       structPointer = 0u; // NULL
       break;
     }
-#if (_SILICON_LABS_32B_SERIES_2_CONFIG >= 3)
+#if ((_SILICON_LABS_32B_SERIES_2_CONFIG >= 3) && (_SILICON_LABS_32B_SERIES_2_CONFIG != 7))
     case (RMR_STRUCT_DCDC_RETIMING_CONFIG): {
       structPointer = (uint32_t)&(rmrState->dcdcRetimingConfig);
       break;
@@ -219,7 +219,7 @@ RAIL_Status_t Rmr_writeRmrStructure(RAIL_RMR_StructureIndex_t structure, uint16_
       targetStruct = (uint8_t *) &(rmrState->generatedChannels);
       break;
     }
-#if (_SILICON_LABS_32B_SERIES_2_CONFIG >= 3)
+#if ((_SILICON_LABS_32B_SERIES_2_CONFIG >= 3) && (_SILICON_LABS_32B_SERIES_2_CONFIG != 7))
     case (RMR_STRUCT_DCDC_RETIMING_CONFIG): {
       size = sizeof(rmrState->dcdcRetimingConfig);
       targetStruct = (uint8_t *) &(rmrState->dcdcRetimingConfig);
@@ -309,7 +309,7 @@ void CI_printRmrStructureLocations(sl_cli_command_arg_t *args)
                      RMR_STRUCT_CHANNEL_CONFIG_ENTRY,
                      (uint8_t *) &(rmrState->generatedChannels),
                      sizeof(rmrState->generatedChannels));
-#if (_SILICON_LABS_32B_SERIES_2_CONFIG >= 3)
+#if ((_SILICON_LABS_32B_SERIES_2_CONFIG >= 3) && (_SILICON_LABS_32B_SERIES_2_CONFIG != 7))
   responsePrintMulti("Id:%u,Address:0x%x,Size:%u",
                      RMR_STRUCT_DCDC_RETIMING_CONFIG,
                      (uint8_t *) &(rmrState->dcdcRetimingConfig),

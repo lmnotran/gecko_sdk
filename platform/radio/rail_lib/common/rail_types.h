@@ -172,6 +172,21 @@ typedef struct RAIL_StateBufferEntry {
  */
 typedef uint32_t RAIL_Time_t;
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+/**
+ * @typedef RAIL_TimerTick_t
+ * @brief Internal RAIL hardware timer tick that drives the RAIL timebase.
+ *
+ * @note \ref RAIL_TimerTick_t does not use the full 32-bit range since we also
+ *   account for fractional error drift on timebase overflow. This counts up
+ *   to ~17 minutes before wrapping.
+ *
+ * @note \ref RAIL_TimerTicksToUs() can be used to convert the delta between
+ *   two \ref RAIL_TimerTick_t values to microseconds.
+ */
+typedef uint32_t RAIL_TimerTick_t;
+#endif//DOXYGEN_SHOULD_SKIP_THIS
+
 /**
  * A pointer to the callback called when the RAIL timer expires.
  *
@@ -1606,6 +1621,13 @@ RAIL_ENUM(RAIL_ChannelConfigEntryType_t) {
 #define RADIO_CONFIG_ENABLE_CONC_PHY 1
 
 /**
+ * @def RADIO_CONFIG_ENABLE_STACK_INFO
+ * @brief Indicates this version of RAIL supports stack info feature in
+ * radio configurator output. Needed for backwards compatibility.
+ */
+#define RADIO_CONFIG_ENABLE_STACK_INFO
+
+/**
  * @struct RAIL_ChannelConfigEntry_t
  * @brief A channel configuration entry structure, which defines a channel range
  *   and parameters across which a corresponding radio configuration is valid.
@@ -1634,6 +1656,11 @@ typedef struct RAIL_ChannelConfigEntry {
                                             channel set. */
   RAIL_ChannelConfigEntryType_t entryType; /**< Indicates channel config type. */
   uint8_t reserved[3]; /**< to align to 32-bit boundary. */
+  const uint8_t *stackInfo; /**< Array containing information according to the protocolId value,
+                                 first byte of this array.
+                                 The first 2 fields are common to all protocols and accessible by RAIL,
+                                 others are ignored by RAIL and only used by the application.
+                                 Common fields are listed in RAIL_StackInfoCommon_t. */
 } RAIL_ChannelConfigEntry_t;
 
 /// @struct RAIL_ChannelConfig_t
@@ -1861,8 +1888,18 @@ typedef struct RAIL_ChannelConfig {
  */
 typedef struct RAIL_ChannelMetadata {
   uint16_t channel; /**< Channel number */
+  uint16_t reserved; /**< Word alignment */
   uint32_t frequency; /**< Channel frequency, in Hz */
 } RAIL_ChannelMetadata_t;
+
+/**
+ * @struct RAIL_StackInfoCommon_t
+ * @brief StackInfo fields common to all protocols.
+ */
+typedef struct RAIL_StackInfoCommon {
+  uint8_t protocolId; /**< Same as RAIL_PtiProtocol_t */
+  uint8_t phyId;  /**< PHY Id depending on the protocol_id value */
+} RAIL_StackInfoCommon_t;
 
 /**
  * @typedef RAIL_RadioConfigChangedCallback_t
@@ -3025,8 +3062,6 @@ RAIL_ENUM_GENERIC(RAIL_RxOptions_t, uint32_t) {
 #define RAIL_RSSI_INVALID         ((int16_t)(RAIL_RSSI_INVALID_DBM * 4))
 /** The lowest RSSI value returned by RAIL: in quarter dBm. */
 #define RAIL_RSSI_LOWEST          ((int16_t)(RAIL_RSSI_INVALID + 1))
-/** The highest RSSI value returned by RAIL: in quarter dBm. */
-#define RAIL_RSSI_HIGHEST         ((int16_t)((-RAIL_RSSI_INVALID_DBM - 1) * 4))
 
 /** Maximum absolute value for RSSI offset */
 #define RAIL_RSSI_OFFSET_MAX      35
@@ -3378,6 +3413,19 @@ typedef struct RAIL_RxPacketDetails {
    * It is always available.
    */
   uint8_t channelHoppingChannelIndex;
+  /**
+   * The channel on which the packet was received.
+   *
+   * It is always available.
+   *
+   * @note It is best to fully process (empty or clear) the receive FIFO
+   *   before changing channel configurations (\ref RAIL_ConfigChannels()
+   *   or a built-in configuration) as unprocessed packets' channel
+   *   could reflect the wrong configuration. On EFR32xG1 only this
+   *   advice also applies when changing channels for receive or transmit
+   *   where unprocessed packets' channel could reflect the new channel.
+   */
+  uint16_t channel;
 } RAIL_RxPacketDetails_t;
 
 /** @} */ // end of group Receive
@@ -4184,6 +4232,88 @@ typedef struct RAIL_VerifyConfig {
 } RAIL_VerifyConfig_t;
 
 /** @} */ // end of group Diagnostic
+
+/******************************************************************************
+ * Energy Friendly Front End Module (EFF)
+ *****************************************************************************/
+/**
+ * @addtogroup EFF
+ * @{
+ */
+
+/**
+ * @enum RAIL_EffDevice_t
+ * @brief EFF part numbers.
+ *
+ * The part number of the attached EFF device is passed to
+ * \ref RAIL_ConfigEff() as \ref RAIL_EffConfig_t.device.
+ * The \ref rail_util_eff configures and controls
+ * the EFF based on the capabilities of the attached EFF.
+ */
+RAIL_ENUM(RAIL_EffDevice_t) {
+  RAIL_EFF_DEVICE_NONE = 0, /**< No EFF device attached. */
+  RAIL_EFF_DEVICE_EFF01Z11, /**< EFF01Z11. LNA only, TX is bypass mode. */
+  RAIL_EFF_DEVICE_EFF01A12, /**< EFF01A12. */
+  RAIL_EFF_DEVICE_COUNT,    /**< A count of the choices in this enumeration. */
+};
+/**
+ * @def RAIL_EFF_SUPPORTS_TRANSMIT(x)
+ * @brief A macro that checks for EFFxx devices that support high power transmit
+ */
+#define RAIL_EFF_SUPPORTS_TRANSMIT(x) ( ((x) == RAIL_EFF_DEVICE_EFF01A12) \
+                                        )
+/**
+ * @def RAIL_EFF_SUPPORTS_RECEIVE(x)
+ * @brief A macro that checks for EFFxx devices that support receive
+ */
+#define RAIL_EFF_SUPPORTS_RECEIVE(x) ( ((x) == RAIL_EFF_DEVICE_EFF01A12)    \
+                                       || ((x) == RAIL_EFF_DEVICE_EFF01Z11) \
+                                       )
+
+/**
+ * @enum RAIL_EffLnaMode_t
+ * @brief EFF LNA Modes.
+ *
+ * The enabled EFF LNA modes are passed to\ref RAIL_ConfigEff() as the
+ * \ref RAIL_EffConfig_t.enabledLnaModes.
+ * The \ref rail_util_eff dynamically transitions between enabled LNA modes to
+ * maximize receive performance.
+ */
+RAIL_ENUM(RAIL_EffLnaMode_t) {
+  RAIL_EFF_LNA_MODE_RURAL   = (0x01U << 0), /**< Rural LNA Mode. */
+  RAIL_EFF_LNA_MODE_URBAN   = (0x01U << 1), /**< Urban LNA Mode. */
+  RAIL_EFF_LNA_MODE_BYPASS  = (0x01U << 2), /**< Bypass LNA Mode. */
+  RAIL_EFF_LNA_MODE_COUNT   = (0x01U << 3), /**< A count of the choices in this enumeration. */
+};
+
+/**
+ * @struct RAIL_EffConfig_t
+ *
+ * @brief Configuration data for the attached EFF device.
+ *
+ * A structure of type \ref RAIL_EffConfig_t is passed to \ref RAIL_ConfigEff().
+ */
+typedef struct RAIL_EffConfig {
+  RAIL_EffDevice_t device;            /**< EFF Device Type */
+  uint8_t ctrl0Port;                  /**< CTRL0 output GPIO port */
+  uint8_t ctrl0Pin;                   /**< CTRL0 output GPIO pin */
+  uint8_t ctrl1Port;                  /**< CTRL1 output GPIO port */
+  uint8_t ctrl1Pin;                   /**< CTRL1 output GPIO pin */
+  uint8_t ctrl2Port;                  /**< CTRL2 output GPIO port */
+  uint8_t ctrl2Pin;                   /**< CTRL2 output GPIO pin */
+  uint8_t ctrl3Port;                  /**< CTRL3 output GPIO port */
+  uint8_t ctrl3Pin;                   /**< CTRL3 output GPIO pin */
+  uint8_t testPort;                   /**< TEST output GPIO port */
+  uint8_t testPin;                    /**< TEST output GPIO pin */
+  uint8_t sensePort;                  /**< SENSE input GPIO port */
+  uint8_t sensePin;                   /**< SENSE input GPIO pin */
+  RAIL_EffLnaMode_t enabledLnaModes;  /**< LNA modes enable bitmask **/
+  uint8_t maxTxContinuousPowerDbm;    /**< Maximum continuous power (in dBm) */
+  uint8_t maxTxDutyCycle;             /**< Maximum transmit duty cycle (as a
+                                           percentage) */
+} RAIL_EffConfig_t;
+
+/** @} */ // end of group EFF
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 

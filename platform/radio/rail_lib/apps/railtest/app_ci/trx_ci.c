@@ -54,6 +54,10 @@
 #include "sl_iostream_usart_vcom_config.h"
 #endif
 
+#if defined(SL_CATALOG_RAIL_UTIL_EFF_PRESENT)
+#include "sl_rail_util_eff_config.h"
+#endif
+
 #if (defined(SL_CATALOG_IOSTREAM_USART_PRESENT) || defined(SL_CATALOG_IOSTREAM_EUSART_PRESENT)) && defined(SL_CATALOG_CLI_PRESENT)
   #if defined(SL_CLI_USE_STDIO)
     #include "sl_iostream.h"
@@ -464,6 +468,16 @@ void setTxStream(sl_cli_command_arg_t *args)
   }
   streamMode = stream;
   enableAppMode(TX_STREAM, enable, sl_cli_get_command_string(args, 0));
+
+#ifdef SL_RAIL_UTIL_EFF_DEVICE
+  if (SL_RAIL_UTIL_EFF_DEVICE != RAIL_EFF_DEVICE_NONE) {
+    /* If configured power is higher than RAIL_UTIL_EFF_MAX_TX_CONTINUOUS_POWER_DBM
+       then it is limited to that latter */
+    responsePrint(sl_cli_get_command_string(args, 0),
+                  "Warning:FEM used so power is limited to %d dBm",
+                  RAIL_UTIL_EFF_MAX_TX_CONTINUOUS_POWER_DBM);
+  }
+#endif
 }
 
 void configDirectMode(sl_cli_command_arg_t *args)
@@ -713,9 +727,10 @@ void sleep(sl_cli_command_arg_t *args)
 
     // Configure the USART Rx pin as a GPIO interrupt for sleep-wake purposes,
     // falling-edge only
-    GPIO_IntConfig(VCOM_RX_PORT,
-                   VCOM_RX_PIN,
-                   false, true, true);
+    GPIO_ExtIntConfig(VCOM_RX_PORT,
+                      VCOM_RX_PIN,
+                      VCOM_RX_PIN,
+                      false, true, true);
 
     serEvent = false;
     rxPacketEvent = false;

@@ -254,6 +254,12 @@ void sl_mac_lower_mac_radio_sleep(void);
 void sl_mac_lower_mac_radio_wakeup(void);
 uint32_t sl_mac_get_mac_timer(void);
 bool sl_mac_lower_mac_channel_is_valid(uint8_t mac_index, uint8_t mac_page_chan);
+
+//------------------------------------------------------------------------------
+// New APIs created after the zigbee/flex merge
+
+sl_status_t sl_mac_set_cca_mode(uint8_t ccaMode);
+
 sl_status_t sl_mac_enable_duty_cycling(void);
 
 // CSL related structs and APIs
@@ -288,7 +294,7 @@ sl_status_t sl_mac_set_mac_csl_period(uint8_t mac_index, uint16_t mac_csl_period
 uint16_t sl_mac_get_mac_csl_period(uint8_t mac_index);
 sl_status_t sl_mac_set_mac_csl_channel_sample(uint8_t mac_index, uint16_t mac_csl_channel_sample_ms);
 uint16_t sl_mac_get_mac_csl_channel_sample(uint8_t mac_index);
-
+void sli_mac_get_eui64(EmberEUI64 eui64);
 // 802.15.4 software filtering APIs (see lower-mac-802.15.4-filtering.c)
 
 // Return true if the packet is accepted, false if the packet is filtered.

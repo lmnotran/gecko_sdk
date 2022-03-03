@@ -577,6 +577,7 @@ const char *getStatusMessage(RAIL_Status_t status);
 void disableIncompatibleProtocols(RAIL_PtiProtocol_t newProtocol);
 bool checkRailHandle(char *command);
 bool getRxDutyCycleSchedWakeupEnable(RAIL_Time_t *sleepInterval);
+uint16_t getLikelyChannel(void);
 
 void RAILCb_TxPacketSent(RAIL_Handle_t railHandle, bool isAck);
 void RAILCb_RxPacketAborted(RAIL_Handle_t railHandle);
@@ -593,7 +594,7 @@ void getAddressFilter(sl_cli_command_arg_t *args);
 void printTxPacket(sl_cli_command_arg_t *args);
 void resetCounters(sl_cli_command_arg_t *args);
 void getPti(sl_cli_command_arg_t *args);
-
+void printChipInfo(void);
 #ifdef __cplusplus
 }
 #endif

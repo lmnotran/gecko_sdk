@@ -298,7 +298,9 @@ bool RAIL_SupportsTxToTx(RAIL_Handle_t railHandle);
 
 /// Boolean to indicate whether the selected chip supports thermistor measurements.
 /// See also runtime refinement \ref RAIL_SupportsExternalThermistor().
-#if ((_SILICON_LABS_32B_SERIES_2_CONFIG == 2) || (_SILICON_LABS_32B_SERIES_2_CONFIG == 3))
+#if ((_SILICON_LABS_32B_SERIES_2_CONFIG == 2) \
+  || (_SILICON_LABS_32B_SERIES_2_CONFIG == 3) \
+  || (_SILICON_LABS_32B_SERIES_2_CONFIG == 7))
 #define RAIL_SUPPORTS_EXTERNAL_THERMISTOR 1
 #else
 #define RAIL_SUPPORTS_EXTERNAL_THERMISTOR 0
@@ -316,11 +318,30 @@ bool RAIL_SupportsTxToTx(RAIL_Handle_t railHandle);
  */
 bool RAIL_SupportsExternalThermistor(RAIL_Handle_t railHandle);
 
+/// Boolean to indicate whether the selected chip supports AUXADC measurements.
+/// See also runtime refinement \ref RAIL_SupportsAuxAdc().
+#if ((_SILICON_LABS_32B_SERIES_2_CONFIG == 2) || (_SILICON_LABS_32B_SERIES_2_CONFIG == 3) \
+  || (_SILICON_LABS_32B_SERIES_2_CONFIG == 5) || (_SILICON_LABS_32B_SERIES_2_CONFIG == 7))
+#define RAIL_SUPPORTS_AUXADC 1
+#else
+#define RAIL_SUPPORTS_AUXADC 0
+#endif
+
+/**
+ * Indicate whether RAIL supports AUXADC measurements on this chip.
+ *
+ * @param[in] railHandle A RAIL instance handle.
+ * @return true if AUXADC measurements are supported; false otherwise.
+ *
+ * Runtime refinement of compile-time \ref RAIL_SUPPORTS_AUXADC.
+ */
+bool RAIL_SupportsAuxAdc(RAIL_Handle_t railHandle);
+
 /// Boolean to indicate whether the selected chip supports a high-precision
 /// LFRCO.
 /// Best to use the runtime refinement \ref RAIL_SupportsPrecisionLFRCO()
 /// because some chip revisions do not support it.
-#if ((_SILICON_LABS_32B_SERIES_1_CONFIG == 3) || (_SILICON_LABS_32B_SERIES_2_CONFIG == 2))
+#if ((_SILICON_LABS_32B_SERIES_1_CONFIG == 3) || (_SILICON_LABS_32B_SERIES_2_CONFIG == 2) || (_SILICON_LABS_32B_SERIES_2_CONFIG == 7))
 #define RAIL_SUPPORTS_PRECISION_LFRCO 1
 #else
 #define RAIL_SUPPORTS_PRECISION_LFRCO 0
@@ -357,7 +378,7 @@ bool RAIL_SupportsRadioEntropy(RAIL_Handle_t railHandle);
 /// Boolean to indicate whether the selected chip supports
 /// RFSENSE Energy Detection Mode.
 /// See also runtime refinement \ref RAIL_SupportsRfSenseEnergyDetection().
-#if ((_SILICON_LABS_32B_SERIES == 1) || (_SILICON_LABS_32B_SERIES_2_CONFIG == 2))
+#if ((_SILICON_LABS_32B_SERIES == 1) || (_SILICON_LABS_32B_SERIES_2_CONFIG == 2) || (_SILICON_LABS_32B_SERIES_2_CONFIG == 7))
 #define RAIL_SUPPORTS_RFSENSE_ENERGY_DETECTION 1
 #else
 #define RAIL_SUPPORTS_RFSENSE_ENERGY_DETECTION 0
@@ -377,7 +398,7 @@ bool RAIL_SupportsRfSenseEnergyDetection(RAIL_Handle_t railHandle);
 /// Boolean to indicate whether the selected chip supports
 /// RFSENSE Selective(OOK) Mode.
 /// See also runtime refinement \ref RAIL_SupportsRfSenseSelectiveOok().
-#if (_SILICON_LABS_32B_SERIES_2_CONFIG == 2)
+#if ((_SILICON_LABS_32B_SERIES_2_CONFIG == 2) || (_SILICON_LABS_32B_SERIES_2_CONFIG == 7))
 #define RAIL_SUPPORTS_RFSENSE_SELECTIVE_OOK 1
 #else
 #define RAIL_SUPPORTS_RFSENSE_SELECTIVE_OOK 0
@@ -395,6 +416,23 @@ bool RAIL_SupportsRfSenseEnergyDetection(RAIL_Handle_t railHandle);
  * Runtime refinement of compile-time \ref RAIL_SUPPORTS_RFSENSE_SELECTIVE_OOK.
  */
 bool RAIL_SupportsRfSenseSelectiveOok(RAIL_Handle_t railHandle);
+
+/// Boolean to indicate whether the selected chip supports the Energy Friendly
+/// Front End Module (EFF).
+/// See also runtime refinement \ref RAIL_SupportsEff().
+#if (_SILICON_LABS_32B_SERIES_2_CONFIG == 5)
+#define RAIL_SUPPORTS_EFF 1
+#else
+#define RAIL_SUPPORTS_EFF 0
+#endif
+
+/**
+ * Indicate whether this chip supports EFF.
+ *
+ * @param[in] railHandle A RAIL instance handle.
+ * @return true if EFF identifier is supported; false otherwise.
+ */
+bool RAIL_SupportsEff(RAIL_Handle_t railHandle);
 
 // BLE features
 // Some features may not be available on all platforms
@@ -538,7 +576,7 @@ bool RAIL_BLE_Supports2Mbps(RAIL_Handle_t railHandle)
 /// Antenna Switching needed for Angle-of-Arrival receives or
 /// Angle-of-Departure transmits.
 /// See also runtime refinement \ref RAIL_BLE_SupportsAntennaSwitching().
-#if (_SILICON_LABS_32B_SERIES_2_CONFIG == 2 || _SILICON_LABS_32B_SERIES_2_CONFIG == 4)
+#if ((_SILICON_LABS_32B_SERIES_2_CONFIG == 2) || (_SILICON_LABS_32B_SERIES_2_CONFIG == 4) || (_SILICON_LABS_32B_SERIES_2_CONFIG == 7))
 #define RAIL_BLE_SUPPORTS_ANTENNA_SWITCHING RAIL_SUPPORTS_PROTOCOL_BLE
 #else
 #define RAIL_BLE_SUPPORTS_ANTENNA_SWITCHING 0
@@ -560,7 +598,8 @@ bool RAIL_BLE_SupportsAntennaSwitching(RAIL_Handle_t railHandle);
 #if ((_SILICON_LABS_32B_SERIES_1_CONFIG == 3) \
   || (_SILICON_LABS_32B_SERIES_2_CONFIG == 1) \
   || (_SILICON_LABS_32B_SERIES_2_CONFIG == 2) \
-  || (_SILICON_LABS_32B_SERIES_2_CONFIG == 4))
+  || (_SILICON_LABS_32B_SERIES_2_CONFIG == 4) \
+  || (_SILICON_LABS_32B_SERIES_2_CONFIG == 7))
 #define RAIL_BLE_SUPPORTS_CODED_PHY RAIL_SUPPORTS_PROTOCOL_BLE
 #else
 #define  RAIL_BLE_SUPPORTS_CODED_PHY 0
@@ -582,7 +621,8 @@ bool RAIL_BLE_SupportsCodedPhy(RAIL_Handle_t railHandle);
 /// used for simultaneous BLE 1Mbps and Coded PHY reception.
 /// See also runtime refinement \ref RAIL_BLE_SupportsSimulscanPhy().
 #if ((_SILICON_LABS_32B_SERIES_2_CONFIG == 2) \
-  || (_SILICON_LABS_32B_SERIES_2_CONFIG == 4))
+  || (_SILICON_LABS_32B_SERIES_2_CONFIG == 4) \
+  || (_SILICON_LABS_32B_SERIES_2_CONFIG == 7))
 #define RAIL_BLE_SUPPORTS_SIMULSCAN_PHY RAIL_SUPPORTS_PROTOCOL_BLE
 #else
 #define RAIL_BLE_SUPPORTS_SIMULSCAN_PHY 0
@@ -603,7 +643,9 @@ bool RAIL_BLE_SupportsSimulscanPhy(RAIL_Handle_t railHandle);
 /// CTE (Constant Tone Extension) needed for Angle-of-Arrival/Departure
 /// transmits.
 /// See also runtime refinement \ref RAIL_BLE_SupportsCte().
-#if (_SILICON_LABS_32B_SERIES_2_CONFIG == 2 || _SILICON_LABS_32B_SERIES_2_CONFIG == 4)
+#if ((_SILICON_LABS_32B_SERIES_2_CONFIG == 2) \
+  || (_SILICON_LABS_32B_SERIES_2_CONFIG == 4) \
+  || (_SILICON_LABS_32B_SERIES_2_CONFIG == 7))
 #define RAIL_BLE_SUPPORTS_CTE RAIL_SUPPORTS_PROTOCOL_BLE
 #else
 #define RAIL_BLE_SUPPORTS_CTE 0
@@ -623,7 +665,7 @@ bool RAIL_BLE_SupportsCte(RAIL_Handle_t railHandle);
 /// Boolean to indicate whether the selected chip supports the
 /// Quuppa PHY.
 /// See also runtime refinement \ref RAIL_BLE_SupportsQuuppa().
-#if (_SILICON_LABS_32B_SERIES_2_CONFIG == 2)
+#if ((_SILICON_LABS_32B_SERIES_2_CONFIG == 2) || (_SILICON_LABS_32B_SERIES_2_CONFIG == 7))
 #define RAIL_BLE_SUPPORTS_QUUPPA RAIL_SUPPORTS_PROTOCOL_BLE
 #else
 #define RAIL_BLE_SUPPORTS_QUUPPA 0
@@ -642,7 +684,9 @@ bool RAIL_BLE_SupportsQuuppa(RAIL_Handle_t railHandle);
 /// Boolean to indicate whether the selected chip supports BLE
 /// IQ Sampling needed for Angle-of-Arrival/Departure receives.
 /// See also runtime refinement \ref RAIL_BLE_SupportsIQSampling().
-#if (_SILICON_LABS_32B_SERIES_2_CONFIG == 2 || _SILICON_LABS_32B_SERIES_2_CONFIG == 4)
+#if ((_SILICON_LABS_32B_SERIES_2_CONFIG == 2) \
+  || (_SILICON_LABS_32B_SERIES_2_CONFIG == 4) \
+  || (_SILICON_LABS_32B_SERIES_2_CONFIG == 7))
 #define RAIL_BLE_SUPPORTS_IQ_SAMPLING RAIL_SUPPORTS_PROTOCOL_BLE
 #else
 #define RAIL_BLE_SUPPORTS_IQ_SAMPLING 0

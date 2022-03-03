@@ -47,7 +47,7 @@ void getChannel(sl_cli_command_arg_t *args)
   if (RAIL_GetDebugMode(railHandle) & RAIL_DEBUG_MODE_FREQ_OVERRIDE) {
     responsePrintError(sl_cli_get_command_string(args, 0), 0x12, "Channels are not valid in Debug Mode");
   } else {
-    responsePrint(sl_cli_get_command_string(args, 0), "channel:%d", channel);
+    responsePrint(sl_cli_get_command_string(args, 0), "channel:%d", getLikelyChannel());
   }
 }
 
@@ -304,10 +304,52 @@ void sweepTxPower(sl_cli_command_arg_t *args)
       end = RAIL_TX_POWER_LEVEL_SUBGIG_LLP_MAX;
       break;
 #endif
+#ifdef RAIL_TX_POWER_MODE_SUBGIG_EFF_30DBM
+    case RAIL_TX_POWER_MODE_SUBGIG_EFF_30DBM:
+      start = RAIL_TX_POWER_LEVEL_SUBGIG_EFF_30DBM_MIN;
+      end = RAIL_TX_POWER_LEVEL_SUBGIG_EFF_30DBM_MAX;
+      break;
+#endif
+#ifdef RAIL_TX_POWER_MODE_SUBGIG_EFF_25DBM
+    case RAIL_TX_POWER_MODE_SUBGIG_EFF_25DBM:
+      start = RAIL_TX_POWER_LEVEL_SUBGIG_EFF_25DBM_MIN;
+      end = RAIL_TX_POWER_LEVEL_SUBGIG_EFF_25DBM_MAX;
+      break;
+#endif
+#ifdef RAIL_TX_POWER_MODE_SUBGIG_EFF_20DBM
+    case RAIL_TX_POWER_MODE_SUBGIG_EFF_20DBM:
+      start = RAIL_TX_POWER_LEVEL_SUBGIG_EFF_20DBM_MIN;
+      end = RAIL_TX_POWER_LEVEL_SUBGIG_EFF_20DBM_MAX;
+      break;
+#endif
 #ifdef RAIL_TX_POWER_MODE_OFDM_PA
     case RAIL_TX_POWER_MODE_OFDM_PA:
       start = RAIL_TX_POWER_LEVEL_OFDM_PA_MIN;
       end = RAIL_TX_POWER_LEVEL_OFDM_PA_MAX;
+      break;
+#endif
+#ifdef RAIL_TX_POWER_MODE_OFDM_PA_EFF_30DBM
+    case RAIL_TX_POWER_MODE_OFDM_PA_EFF_30DBM:
+      start = RAIL_TX_POWER_LEVEL_OFDM_PA_EFF_30DBM_MIN;
+      end = RAIL_TX_POWER_LEVEL_OFDM_PA_EFF_30DBM_MAX;
+      break;
+#endif
+#ifdef RAIL_TX_POWER_MODE_OFDM_PA_EFF_25DBM
+    case RAIL_TX_POWER_MODE_OFDM_PA_EFF_25DBM:
+      start = RAIL_TX_POWER_LEVEL_OFDM_PA_EFF_25DBM_MIN;
+      end = RAIL_TX_POWER_LEVEL_OFDM_PA_EFF_25DBM_MAX;
+      break;
+#endif
+#ifdef RAIL_TX_POWER_MODE_OFDM_PA_EFF_20DBM
+    case RAIL_TX_POWER_MODE_OFDM_PA_EFF_20DBM:
+      start = RAIL_TX_POWER_LEVEL_OFDM_PA_EFF_20DBM_MIN;
+      end = RAIL_TX_POWER_LEVEL_OFDM_PA_EFF_20DBM_MAX;
+      break;
+#endif
+#ifdef RAIL_TX_POWER_MODE_OFDM_PA_EFF_MAXDBM
+    case RAIL_TX_POWER_MODE_OFDM_PA_EFF_MAXDBM:
+      start = RAIL_TX_POWER_LEVEL_OFDM_PA_EFF_MAXDBM_MIN;
+      end = RAIL_TX_POWER_LEVEL_OFDM_PA_EFF_MAXDBM_MAX;
       break;
 #endif
     default:
@@ -332,6 +374,7 @@ void sweepTxPower(sl_cli_command_arg_t *args)
       }
       if (input == 'q') {
         responsePrintError(sl_cli_get_command_string(args, 0), 0x20, "Sweep Aborted.");
+        RAIL_Idle(railHandle, RAIL_IDLE_FORCE_SHUTDOWN_CLEAR_FLAGS, true);
         return;
       }
       input = getchar();
@@ -615,6 +658,7 @@ void delayUs(sl_cli_command_arg_t *args)
 
 #ifdef RAIL_PA_AUTO_MODE
 #include "pa_auto_mode.h"
+static bool paAutoModeEnable = false;
 void configPaAutoMode(sl_cli_command_arg_t *args)
 {
   uint8_t index = sl_cli_get_argument_uint8(args, 0);
@@ -628,7 +672,10 @@ void configPaAutoMode(sl_cli_command_arg_t *args)
     responsePrintError(sl_cli_get_command_string(args, 0), 0x01, "Invalid mode (%d) specified", mode);
     return;
   }
-
+  if (!paAutoModeEnable) {
+    responsePrintError(sl_cli_get_command_string(args, 0), 0x01, "PA auto mode should be enabled to set configs.");
+    return;
+  }
   RAIL_PaAutoModeConfig[index].min = min;
   RAIL_PaAutoModeConfig[index].max = max;
   RAIL_PaAutoModeConfig[index].mode = mode;
@@ -641,10 +688,10 @@ void configPaAutoMode(sl_cli_command_arg_t *args)
 void enablePaAutoMode(sl_cli_command_arg_t *args)
 {
   CHECK_RAIL_HANDLE(sl_cli_get_command_string(args, 0));
-  bool enable = !!sl_cli_get_argument_uint8(args, 0);
-  RAIL_EnablePaAutoMode(railHandle, enable);
+  paAutoModeEnable = !!sl_cli_get_argument_uint8(args, 0);
+  RAIL_EnablePaAutoMode(railHandle, paAutoModeEnable);
 
-  responsePrint(sl_cli_get_command_string(args, 0), "enable:%s", enable ? "True" : "False");
+  responsePrint(sl_cli_get_command_string(args, 0), "enable:%s", paAutoModeEnable ? "True" : "False");
 }
 #else
 void configPaAutoMode(sl_cli_command_arg_t *args)
