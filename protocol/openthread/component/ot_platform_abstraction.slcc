@@ -105,6 +105,7 @@ source:
       - path: protocol/openthread/platform-abstraction/efr32/entropy.c
       - path: protocol/openthread/platform-abstraction/efr32/flash.c
       - path: protocol/openthread/platform-abstraction/efr32/logging.c
+      - path: protocol/openthread/platform-abstraction/efr32/memory.c
       - path: protocol/openthread/platform-abstraction/efr32/misc.c
       - path: protocol/openthread/platform-abstraction/efr32/crypto.c
       - path: protocol/openthread/platform-abstraction/efr32/ieee802154-packet-utils.cpp
@@ -187,9 +188,6 @@ template_contribution:
       handler: sl_ot_rtos_init
     condition:
       - kernel
-  - name: ot_init
-    value: sl_ot_create_instance
-    priority: 0
   - name: ot_init
     value: sl_ot_sleep_init
     priority: 10
