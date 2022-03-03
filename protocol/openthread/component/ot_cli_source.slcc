@@ -51,6 +51,3 @@ source:
 template_contribution:
   - name: component_catalog
     value: openthread_cli
-  - name: ot_init
-    value: sl_ot_cli_init
-    priority: 20
