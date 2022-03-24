@@ -189,6 +189,11 @@ template_contribution:
     condition:
       - kernel
   - name: ot_init
+    value: sl_ot_create_instance
+    priority: 0
+    unless:
+      - ot_stack_generic
+  - name: ot_init
     value: sl_ot_sleep_init
     priority: 10
     condition:
