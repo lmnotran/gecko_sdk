@@ -1,0 +1,8 @@
+id: ot_efr32
+label: ot-efr32
+package: OpenThread
+category: OpenThread
+quality: production
+description: This component is used exclude things not needed for ot-efr32
+provides:
+  - name: ot_efr32

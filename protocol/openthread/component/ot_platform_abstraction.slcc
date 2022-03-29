@@ -193,6 +193,7 @@ template_contribution:
     priority: 0
     unless:
       - ot_stack_generic
+      - ot_efr32
   - name: ot_init
     value: sl_ot_sleep_init
     priority: 10

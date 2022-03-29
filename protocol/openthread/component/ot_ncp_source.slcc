@@ -64,3 +64,5 @@ template_contribution:
   - name: ot_init
     value: sl_ot_ncp_init
     priority: 5
+    unless:
+      - ot_efr32
