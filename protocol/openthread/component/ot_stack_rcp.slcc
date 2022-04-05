@@ -29,5 +29,7 @@ define:
     value: 1
   - name: OPENTHREAD_SPINEL_CONFIG_OPENTHREAD_MESSAGE_ENABLE
     value: 0
+    unless:
+      - ot_efr32  # Defined in openthread/src/lib/spinel/CMakeLists.txt
   - name: OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE
     value: 0
