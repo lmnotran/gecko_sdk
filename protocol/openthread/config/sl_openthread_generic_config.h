@@ -65,7 +65,7 @@
 #define PACKAGE_BUGREPORT "openthread-devel@googlegroups.com"
 
 /* Define to the full name of this package. */
-// #define PACKAGE_NAME "SL-OPENTHREAD"
+#define PACKAGE_NAME "SL-OPENTHREAD"
 
 /* Define to the full name and version of this package. */
 #define PACKAGE_STRING "SL-OPENTHREAD/2.0.2.0_GitHub-3b79cb0d0"

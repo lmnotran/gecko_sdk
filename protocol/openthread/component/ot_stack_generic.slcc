@@ -19,4 +19,4 @@ define:
   - name: OPENTHREAD_SPINEL_CONFIG_OPENTHREAD_MESSAGE_ENABLE
     value: 1
     condition:
-    - ot_ncpgit
+    - ot_ncp
