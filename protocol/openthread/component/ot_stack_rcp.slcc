@@ -14,22 +14,17 @@ requires:
 config_file:
   - path: protocol/openthread/config/sl_openthread_features_config.h
   - path: protocol/openthread/config/sl_openthread_generic_config.h
-    unless:
-      - ot_efr32
+
 define:
   - name: SL_OPENTHREAD_STACK_FEATURES_CONFIG_FILE
     value: "\"sl_openthread_features_config.h\""
   - name: OPENTHREAD_CONFIG_FILE
     value: "\"sl_openthread_generic_config.h\""
-    unless:
-      - ot_efr32
   - name: OPENTHREAD_COPROCESSOR
     value: 1
   - name: OPENTHREAD_RADIO
     value: 1
   - name: OPENTHREAD_SPINEL_CONFIG_OPENTHREAD_MESSAGE_ENABLE
     value: 0
-    unless:
-      - ot_efr32  # Defined in openthread/src/lib/spinel/CMakeLists.txt
   - name: OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE
     value: 0
