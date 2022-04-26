@@ -1,8 +1,0 @@
-id: ot_efr32
-label: ot-efr32
-package: OpenThread
-category: OpenThread ot-efr32
-quality: internal
-description: This component is used exclude things not needed for ot-efr32
-provides:
-  - name: ot_efr32
