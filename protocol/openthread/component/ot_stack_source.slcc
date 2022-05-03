@@ -79,6 +79,7 @@ source:
       - path: crypto/aes_ccm.cpp
       - path: crypto/aes_ecb.cpp
       - path: crypto/ecdsa.cpp
+      - path: crypto/ecdsa_tinycrypt.cpp
       - path: crypto/hkdf_sha256.cpp
       - path: crypto/hmac_sha256.cpp
       - path: crypto/mbedtls.cpp
