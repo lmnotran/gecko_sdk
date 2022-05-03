@@ -54,5 +54,3 @@ template_contribution:
   - name: ot_init
     value: sl_ot_cli_init
     priority: 20
-    unless:
-    - ot_stack_generic
