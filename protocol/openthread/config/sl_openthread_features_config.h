@@ -6,8 +6,8 @@
 
 // <h>  Thread Stack Protocol Version
 // <o   OPENTHREAD_CONFIG_THREAD_VERSION>
-//      <2=> Thread 1.1 (OT_THREAD_VERSION_1_1 = 2)
-//      <3=> Thread 1.2 (OT_THREAD_VERSION_1_2 = 3)
+//      <OT_THREAD_VERSION_1_1=> Thread 1.1
+//      <OT_THREAD_VERSION_1_2=> Thread 1.2
 // <i>  Thread 1.2 is compatible with Thread 1.1.
 // <i>  Current Default: OT_THREAD_VERSION_1_2
 #ifndef OPENTHREAD_CONFIG_THREAD_VERSION

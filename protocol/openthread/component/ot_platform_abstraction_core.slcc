@@ -122,17 +122,6 @@ template_contribution:
       handler: sl_ot_init
     unless:
       - kernel
-  # * NOTE: This is a workaround for the ot-efr32 SoC library since it needs the
-  # *       SL_CATALOG_OPENTHREAD_CLI_PRESENT macro in uartdrv_uart.c. Normally
-  # *       this would be contributed to the compoent_catalog in
-  # *       ot_cli_source.slcc, but we don't want to reference any OpenThread
-  # *       stack code for ot-efr32 slc builds.
-  # *
-  # *       For regular GSDK builds, this isn't a concern
-  - name: component_catalog
-    value: openthread_cli
-    condition:
-      - ot_efr32_soc
   - name: ot_init
     value: sl_ot_sleep_init
     priority: 10
