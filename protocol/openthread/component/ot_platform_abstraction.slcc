@@ -8,6 +8,12 @@ provides:
   - name: ot_platform_abstraction
 requires:
   - name: ot_platform_abstraction_core
+  - name: cmsis_rtos2
+    condition:
+    - kernel
+  - name: fem_util
+    condition:
+    - custom_board_has_fem
   - name: ot_coex
     condition:
     - rail_util_coex
@@ -18,6 +24,9 @@ requires:
   - name: ot_subghz_phy
     condition:
     - hardware_board_supports_ot_subghz
+  - name: gatt_configuration
+    condition:
+    - bluetooth_stack
 config_file:
   - path: protocol/openthread/config/sl_openthread_rtos_config.h
     condition:
