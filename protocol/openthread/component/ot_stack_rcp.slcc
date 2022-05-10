@@ -14,7 +14,6 @@ requires:
 config_file:
   - path: protocol/openthread/config/sl_openthread_features_config.h
   - path: protocol/openthread/config/sl_openthread_generic_config.h
-
 define:
   - name: SL_OPENTHREAD_STACK_FEATURES_CONFIG_FILE
     value: "\"sl_openthread_features_config.h\""
