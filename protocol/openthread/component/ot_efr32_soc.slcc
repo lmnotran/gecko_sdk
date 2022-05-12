@@ -1,8 +1,0 @@
-id: ot_efr32_soc
-label: ot-efr32 SoC
-package: OpenThread
-category: OpenThread ot-efr32
-quality: internal
-description: This component is used exclude things not needed for ot-efr32 SoC images
-provides:
-  - name: ot_efr32_soc
