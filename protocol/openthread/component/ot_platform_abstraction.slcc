@@ -71,6 +71,13 @@ define:
     condition:
       - rail_util_ieee802154_phy_select
 template_contribution:
+  - name: event_handler
+    value:
+      event: internal_app_init
+      include: sl_ot_rtos_adaptation.h
+      handler: sl_ot_rtos_init
+    condition:
+      - kernel
   - name: ot_init
     value: sl_ot_create_instance
     priority: 0

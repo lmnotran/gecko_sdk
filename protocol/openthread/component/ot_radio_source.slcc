@@ -6,8 +6,6 @@ quality: production
 description: This component provides the OpenThread radio only support
 provides:
   - name: ot_radio
-  - name: wireless_stack
-    allow_multiple: true
 requires:
   - name: cpp_support
   - name: device_supports_thread
