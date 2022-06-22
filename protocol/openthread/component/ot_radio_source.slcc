@@ -6,8 +6,6 @@ quality: production
 description: This component provides the OpenThread radio only support
 provides:
   - name: ot_radio
-  - name: wireless_stack
-    allow_multiple: true
 requires:
   - name: cpp_support
   - name: device_supports_thread
@@ -125,6 +123,7 @@ include:
       - path: common/extension.hpp
       - path: common/heap.hpp
       - path: common/heap_allocatable.hpp
+      - path: common/heap_array.hpp
       - path: common/heap_data.hpp
       - path: common/heap_string.hpp
       - path: common/instance.hpp
@@ -132,6 +131,7 @@ include:
       - path: common/linked_list.hpp
       - path: common/locator.hpp
       - path: common/locator_getters.hpp
+      - path: common/log.hpp
       - path: common/logging.hpp
       - path: common/message.hpp
       - path: common/new.hpp
@@ -182,10 +182,10 @@ include:
       - path: config/link_raw.h
       - path: config/logging.h
       - path: config/mac.h
+      - path: config/misc.h
       - path: config/mle.h
       - path: config/netdata_publisher.h
       - path: config/openthread-core-config-check.h
-      - path: config/openthread-core-default-config.h
       - path: config/parent_search.h
       - path: config/ping_sender.h
       - path: config/platform.h
@@ -352,7 +352,7 @@ source:
       - path: common/data.cpp
       - path: common/error.cpp
       - path: common/instance.cpp
-      - path: common/logging.cpp
+      - path: common/log.cpp
       - path: common/random_manager.cpp
       - path: common/string.cpp
       - path: common/tasklet.cpp
